@@ -58,7 +58,7 @@ function ensemble = predict_d18oc(seatemp, d18osw, seasonal_seatemp, foram, draw
 
     % Get MCMC trace draws
     % This decides whether we use pooled vs seasonal and pooled vs hierarchical.
-    [a, b, tau] = get_draws(seasonal_seatemp, foram);
+    [a, b, tau] = drawsfun(seasonal_seatemp, foram);
     tau2 = tau .^ 2;
 
     nd = length(seatemp);
