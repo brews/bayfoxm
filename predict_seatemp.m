@@ -1,10 +1,48 @@
 function ensemble = predict_seatemp(d18oc, d18osw, prior_mean, prior_std, seasonal_seatemp, foram, drawsfun)
-% PREDICT_D18OC Predict sea-surface temperature given δ18O of foram calcite and seawater δ18O.
+% PREDICT_SEATEMP Predict sea-surface temperature given δ18O of foram calcite and seawater δ18O.
 %
-% [alpha beta tau] = predict_d18oc(d18oc, d18osw, prior_mean, prior_std)
-% [alpha beta tau] = predict_d18oc(d18oc, d18osw, prior_mean, prior_std, seasonal_seatemp)
-% [alpha beta tau] = predict_d18oc(d18oc, d18osw, prior_mean, prior_std, seasonal_seatemp, foram)
-% [alpha beta tau] = predict_d18oc(d18oc, d18osw, prior_mean, prior_std, seasonal_seatemp, foram, drawsfun)
+% Syntax:
+%   ensemble = predict_seatemp(d18oc, d18osw, prior_mean, prior_std)
+%   ensemble = predict_seatemp(d18oc, d18osw, prior_mean, prior_std, seasonal_seatemp)
+%   ensemble = predict_seatemp(d18oc, d18osw, prior_mean, prior_std, seasonal_seatemp, foram)
+%   ensemble = predict_seatemp(d18oc, d18osw, prior_mean, prior_std, seasonal_seatemp, foram, drawsfun)
+%
+% Inputs:
+%   d18oc - Scalar or [n x 1] column vector of δ18O of planktic foraminiferal 
+%       calcite (‰; VPDB) samples.
+%   d18osw - Scalar or n-length vector containing seatwater δ18O values (‰ VSMOW).
+%   prior_mean - Scalar prior mean of sea-surface temperature (°C).
+%   prior_std - Scalar prior standard deviation of sea-surface temperature (°C).
+%   seasonal_seatemp - Boolean indicating whether to use annual or seasonal 
+%       calibration model parameters.
+%   foram - Character string. Foraminiferal of returned prediction. Can be 
+%       "T. sacculifer", "N. pachyderma", "G. bulloides", "N. incompta", 
+%       "G. ruber", or "none". If given species name, hierarchical calibration 
+%       model is used. If not given or "none" uses pooled calibration model.
+%   drawsfun - For testing, debugging and advanced use. Function used to get 
+%       alpha, beta, tau Bayesian model parameters draw column vectors. Will be 
+%       passed `seasonal_seatemp` and `foram` as arguments.
+%
+% Outputs:
+%   ensemble - [n x m] matrix of sea-surface temperature (°C) predictions. 
+%       m-length posterior ensemble for each of the n input sea-temperature 
+%       values.
+%
+% Example:
+%   % Annual pooled calibration model.
+%   ens = predict_seatemp([0; 0.15; 0.2], 0.75, 15.0, 10.0)
+%
+%  % Hierarchical annual model for G. bulloides samples.
+%   ens = predict_seatemp([0; 0.15; 0.2], 0.75, 15.0, 10.0, false, "G. bulloides")
+%
+%  % Hierarchical seasonal model for G. bulloides samples.
+%   ens = predict_seatemp([0; 0.15; 0.2], 0.75, 15.0, 10.0, true, "G. bulloides")
+%
+% Other m-files required: get_draws.m
+% Subfunctions: TARGET_ALL_PREDICT
+% MAT-files required: None.
+%
+% See also: PREDICT_D18OC
 
     switch nargin  % Set default args. A bit janky.
         case 4
@@ -44,9 +82,25 @@ end
 
 
 function y = target_all_predict(d18oc, d18osw, a, b, tau2, prior_mu, prior_inv_cov)
-% TARGET_ALL_PREDICT Analytical solution for d18Oc inference
+% TARGET_ALL_PREDICT Analytical solution for seatemp inference with single MCMC draw.
+%
+% Syntax: y = target_all_predict(d18oc, d18osw, a, b, tau2, prior_mu, prior_inv_cov)
+%
+% Inputs:
+%   d18oc - Scalar or [n x 1] column vector of δ18O of planktic foraminiferal 
+%       calcite (‰; VPDB) samples.
+%   d18osw - Scalar or n-length column vector containing seatwater δ18O values (‰ VPDB).
+%   a - Scalar MCMC trace draw of intercept parameter.
+%   b - Scalar MCMC trace draw of slope parameter.
+%   tau2 - Scalar MCMC trace draw of residual variance.
+%   prior_mu - [n, 1] column vector of prior means for each element of `d18oc`.
+%   prior_inv_cov - [n, n] matrix, inverse of the prior covariance matrix for 
+%       `d18oc`.
+%
+% Outputs:
+%   y - Vector of sample inferred seatemp time series conditional on input.
 
-    % d18osw should be scale adjusted to VPDB from VSMOW.
+    % NOTE: δ18Osw should already be scale adjusted to VPDB from VSMOW.
     if (nargin ~= 7)
         error('target_all_predict: incorrect number of input arguments');
     end

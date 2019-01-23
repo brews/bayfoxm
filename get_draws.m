@@ -1,8 +1,38 @@
 function [a, b, tau] = get_draws(seasonal_seatemp, foram)
-% GET_DRAWS Fetch MCMC trace draws
+% GET_DRAWS - Fetch MCMC trace draws
+% This is used internally by `predict_d18oc` and `predict_seatemp`.
 %
-% [a b t] = get_draws(seasonal_seatemp)
-% [a b t] = get_draws(seasonal_seatemp, foram)
+% Syntax:
+%   [a b tau] = get_draws(seasonal_seatemp)
+%   [a b tau] = get_draws(seasonal_seatemp, foram)
+%
+% Inputs:
+%   seasonal_seatemp - Boolean. Indicates whether to return draws from a 
+%       seasonal model. If `false`, returns annual model draws. Default is 
+%       `false.
+%   foram - Optional. Character string. Which foram group to return draws for, 
+%       in a hierarchical model. If not given or "none", will use pooled model.
+%
+%  Outputs:
+%   a - [n x 1] column vector of alpha or intercept parameter for Bayesian model.
+%   b - [n x 1] column vector of beta or slope parameter for Bayesian model.
+%   tau - [n x 1] column vector of tau or error term of Bayesian model.
+%
+% Example:
+%   [a b tau] = get_draws(false)  % Annual pooled model parameters.
+%
+%   % Hierarchical annual model for G. bulloides samples.
+%   [a b tau] = get_draws(false, "G. bulloides")
+%
+%   % Hierarchical seasonal model for G. bulloides samples.
+%   [a b tau] = get_draws(true, "G. bulloides")
+%
+% Other m-files required: None.
+% Subfunctions: None.
+% MAT-files required: None.
+%
+% Depends on ./tracedumps/*.csv directory and csv file names. Be sure that this 
+% directory is in PWD.
 
     if (nargin < 1)
         error('get_draws: not enough input arguments, 1 is required');
