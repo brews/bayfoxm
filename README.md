@@ -9,7 +9,7 @@ A Bayesian, global planktic foraminifera core top calibration to sea-surface tem
 
 bayfoxm is a suite of linear Bayesian calibration models for planktic core top foraminiferal δ18O (δ18Oc) and SSTs. These calibrations are especially useful because they capture the uncertainty in the relationship between modern SSTs and core top δ18Oc. This package is a companion to a paper currently under preparation for the journal "Paleoceanography and Paleoclimatology".
 
-These calibration are also available in the [`bayfox` package](https://github.com/brews/bayfox) for Python, and the [`bayfoxr` package]() for the R statistical environment.
+These calibration are also available in the [`bayfox` package](https://github.com/brews/bayfox) for Python, and the [`bayfoxr` package](https://github.com/brews/bayfoxr) for the R statistical environment.
 
 ## A quick example
 
