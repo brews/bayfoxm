@@ -1,5 +1,5 @@
-function ensemble = predict_seatemp(d18oc, d18osw, prior_mean, prior_std, seasonal_seatemp, foram, drawsfun)
-% PREDICT_SEATEMP Predict sea-surface temperature given δ18O of foram calcite and seawater δ18O.
+function ensemble = predict_seatemp(d18oc, d18osw, prior_mean, prior_std, seasonal_seatemp, foram)
+% PREDICT_SEATEMP Predict sea-surface temperature given d18O of foram calcite and seawater d18O.
 %
 % Syntax:
 %   ensemble = predict_seatemp(d18oc, d18osw, prior_mean, prior_std)
@@ -8,23 +8,20 @@ function ensemble = predict_seatemp(d18oc, d18osw, prior_mean, prior_std, season
 %   ensemble = predict_seatemp(d18oc, d18osw, prior_mean, prior_std, seasonal_seatemp, foram, drawsfun)
 %
 % Inputs:
-%   d18oc - Scalar or [n x 1] column vector of δ18O of planktic foraminiferal 
-%       calcite (‰; VPDB) samples.
-%   d18osw - Scalar or n-length vector containing seatwater δ18O values (‰ VSMOW).
-%   prior_mean - Scalar prior mean of sea-surface temperature (°C).
-%   prior_std - Scalar prior standard deviation of sea-surface temperature (°C).
+%   d18oc - Scalar or [n x 1] column vector of d18O of planktic foraminiferal 
+%       calcite (permil VPDB) samples.
+%   d18osw - Scalar or n-length vector containing seatwater d18O values (permil VSMOW).
+%   prior_mean - Scalar prior mean of sea-surface temperature (�C).
+%   prior_std - Scalar prior standard deviation of sea-surface temperature (�C).
 %   seasonal_seatemp - Boolean indicating whether to use annual or seasonal 
 %       calibration model parameters.
 %   foram - Character string. Foraminiferal of returned prediction. Can be 
 %       "T. sacculifer", "N. pachyderma", "G. bulloides", "N. incompta", 
 %       "G. ruber", or "none". If given species name, hierarchical calibration 
 %       model is used. If not given or "none" uses pooled calibration model.
-%   drawsfun - For testing, debugging and advanced use. Function used to get 
-%       alpha, beta, tau Bayesian model parameters draw column vectors. Will be 
-%       passed `seasonal_seatemp` and `foram` as arguments.
 %
 % Outputs:
-%   ensemble - [n x m] matrix of sea-surface temperature (°C) predictions. 
+%   ensemble - [n x m] matrix of sea-surface temperature (�C) predictions. 
 %       m-length posterior ensemble for each of the n input sea-temperature 
 %       values.
 %
@@ -66,17 +63,17 @@ function ensemble = predict_seatemp(d18oc, d18osw, prior_mean, prior_std, season
     nd = length(d18oc);
     n_draws = length(tau);
 
-    % Unit adjustment for permille VSMOW to permille VPDB.
+    % Unit adjustment for permil VSMOW to permil VPDB.
     d18osw_adj = d18osw - 0.27;
 
     % Prior mean and inverse covariance matrix
     pmu = ones(nd, 1) * prior_mean;
     pinv_cov = eye(nd) * prior_std ^ (-2);
 
-    # Might be able to vectorize the loop below...
+    % Might be able to vectorize the loop below...
     ensemble = NaN(nd, n_draws);
-    for (i = 1:n_draws)
-        ensemble(:, i) = target_all_predict(d18oc, d18osw, a(i), b(i), tau2(i), pmu, pinv_cov);
+    for i = 1:n_draws
+        ensemble(:, i) = target_all_predict(d18oc, d18osw_adj, a(i), b(i), tau2(i), pmu, pinv_cov);
     end
 end
 
@@ -87,9 +84,9 @@ function y = target_all_predict(d18oc, d18osw, a, b, tau2, prior_mu, prior_inv_c
 % Syntax: y = target_all_predict(d18oc, d18osw, a, b, tau2, prior_mu, prior_inv_cov)
 %
 % Inputs:
-%   d18oc - Scalar or [n x 1] column vector of δ18O of planktic foraminiferal 
-%       calcite (‰; VPDB) samples.
-%   d18osw - Scalar or n-length column vector containing seatwater δ18O values (‰ VPDB).
+%   d18oc - Scalar or [n x 1] column vector of d18O of planktic foraminiferal 
+%       calcite (VPDB) samples.
+%   d18osw - Scalar or n-length column vector containing seawater d18O values (per mil VPDB).
 %   a - Scalar MCMC trace draw of intercept parameter.
 %   b - Scalar MCMC trace draw of slope parameter.
 %   tau2 - Scalar MCMC trace draw of residual variance.
@@ -100,7 +97,7 @@ function y = target_all_predict(d18oc, d18osw, a, b, tau2, prior_mu, prior_inv_c
 % Outputs:
 %   y - Vector of sample inferred seatemp time series conditional on input.
 
-    % NOTE: δ18Osw should already be scale adjusted to VPDB from VSMOW.
+    % NOTE: d18Osw should already be scale adjusted to VPDB from VSMOW.
     if (nargin ~= 7)
         error('target_all_predict: incorrect number of input arguments');
     end

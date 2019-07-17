@@ -1,5 +1,5 @@
 function ensemble = predict_d18oc(seatemp, d18osw, seasonal_seatemp, foram, drawsfun)
-% PREDICT_D18OC - Predict δ18O of foram calcite given sea-surface temperature and seawater δ18O.
+% PREDICT_D18OC - Predict δ18O of foram calcite given sea-surface temperature and seawater d18O.
 %
 % Syntax:
 %   ensemble = predict_d18oc(seatemp, d18osw)
@@ -8,8 +8,8 @@ function ensemble = predict_d18oc(seatemp, d18osw, seasonal_seatemp, foram, draw
 %   ensemble = predict_d18oc(seatemp, d18osw, seasonal_seatemp, foram, drawsfun)
 %
 % Inputs:
-%   seatemp - Scalar or [n x 1] column vector of sea-surface temperature values (°C).
-%   d18osw - Scalar or n-length vector containing seatwater d18O values (‰ VSMOW).
+%   seatemp - Scalar or [n x 1] column vector of sea-surface temperature values (�C).
+%   d18osw - Scalar or n-length vector containing seatwater d18O values (per mil VSMOW).
 %   seasonal_seatemp - Boolean indicating whether to use annual or seasonal 
 %       calibration model parameters.
 %   foram - Character string. Foraminiferal of returned prediction. Can be 
@@ -21,7 +21,7 @@ function ensemble = predict_d18oc(seatemp, d18osw, seasonal_seatemp, foram, draw
 %       passed `seasonal_seatemp` and `foram` as arguments.
 %
 % Outputs:
-%   ensemble - [n x m] matrix of δ18Oc (‰ VPDB) predictions. m-length posterior 
+%   ensemble - [n x m] matrix of d18Oc (VPDB) predictions. m-length posterior 
 %       ensemble for each of the n input sea-temperature values.
 %
 % Example:
@@ -51,7 +51,7 @@ function ensemble = predict_d18oc(seatemp, d18osw, seasonal_seatemp, foram, draw
         case 4
             drawsfun = @get_draws;
         case 5
-            # DEBUG RUN
+            % DEBUG RUN
         otherwise
             error('predict_d18oc: incorrect number of input arguments');
     end
@@ -59,17 +59,11 @@ function ensemble = predict_d18oc(seatemp, d18osw, seasonal_seatemp, foram, draw
     % Get MCMC trace draws
     % This decides whether we use pooled vs seasonal and pooled vs hierarchical.
     [a, b, tau] = drawsfun(seasonal_seatemp, foram);
-    tau2 = tau .^ 2;
+    %note that tau is standard deviation.
 
-    nd = length(seatemp);
-    n_draws = length(tau);
-
-    % Unit adjustment for permille VSMOW to permille VPDB.
+    % Unit adjustment for permil VSMOW to permil VPDB.
     d18osw_adj = d18osw - 0.27;
-
-    # Might be able to vectorize the loop below...
-    ensemble = NaN(nd, n_draws);
-    for (i = 1:n_draws)
-        ensemble(:, i) = normrnd(a(i) + seatemp * b(i) + d18osw_adj, tau2(i));
-    end
+    
+    %vectorized calculation of ensemble.
+    ensemble = normrnd(a' + seatemp * b' + d18osw_adj, repmat(tau',length(seatemp),1));
 end
