@@ -38,8 +38,11 @@ function [a, b, tau] = get_draws(seasonal_seatemp, foram)
         error('get_draws: not enough input arguments, 1 is required');
     end
 
-    % First, ID which trace file we need.
-    tracedir = './tracedumps/';  # Not sure this approach will always work.
+    % Get path to where the trace files are
+    path_ind=which('get_draws');
+    path_ind=path_ind(1:end-11);
+    tracedir = strcat(path_ind,'tracedumps/');
+    % ID which trace file we need.
     foram_half = 'hierarchical';
     time_half = 'annual';
 
@@ -61,25 +64,29 @@ function [a, b, tau] = get_draws(seasonal_seatemp, foram)
     fclose(fid);
     header = strsplit(first_line, ',');
 
-    # Put together the column IDs we need and use it to pull correct col from 
-    # `traces`.
+    %Put together the column IDs we need and use it to pull correct col from 
+    % `traces`.
     target_vars = {'a'; 'b'; 'tau'};
     n_vars = size(target_vars, 1);
-    idxs = [];
+    idxs = NaN(3,1);
     for i = 1:n_vars
         target_col = target_vars{i, 1};
         if strcmp(foram_half, 'hierarchical')
-            target_col = [target_vars{i, 1} '__' foram];
+            target_col = strcat(target_vars{i, 1},'__',foram);
         end
-        target_idx = find(strcmp(header, target_col));
+        target_idx = find(header==target_col);
         if isempty(target_idx)
             error(['get_draws: cannot find parameters for foram: ' foram]);
         end
-        idxs = [idxs; target_idx];
+        idxs(i) = target_idx;
     end
 
     % Octave has no 'matsplit' so...
     a = traces(:, idxs(1));
     b = traces(:, idxs(2));
     tau = traces(:, idxs(3));
+    % thin these draws to 1000
+    a = a(1:10:end);
+    b = b(1:10:end);
+    tau = tau(1:10:end);
 end
